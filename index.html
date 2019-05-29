@@ -14,6 +14,7 @@
   </style>
   <script>
     'use strict'
+    const FULL = 2 * Math.PI
 
     let w = 0
     let h = 0
@@ -39,8 +40,7 @@
       }
     }
 
-    function drawFrame(ctx, w, h, f, t) {
-      const FULL = 2 * Math.PI
+    function drawFrameDemo(ctx, w, h, f, t) {
       const omega = 0.5 * FULL
       const color_omega = 1 * FULL
       const r = 100
@@ -53,6 +53,81 @@
       ctx.fill()
 
       return 0.03
+    }
+
+    let innerRadius = 100
+
+    let stripWidth = 30
+    let stripSpace = 20
+
+    let space = 200
+    let closerRadius = 170
+    let fartherRadius = 200
+
+    let outerSpace = innerRadius * FULL / 2
+    let outerCloserRadius = 260
+    let outerFartherRadius = 300
+
+    let tipLength = 2 * (outerFartherRadius - outerCloserRadius)
+    let tipWidthFactor = 2
+
+    function drawFrame(ctx, w, h, f, t) {
+      ctx.translate(w/2, h/2)
+
+      const color_omega = 0.5 * FULL
+      const intensity = (Math.sin(color_omega * t) + 1) / 2
+      ctx.fillStyle = 'rgb(0,'+~~(255*intensity)+',0)'
+
+      const omega = 0.01 * FULL
+      ctx.rotate(omega * t)
+      const size = tipLength + outerFartherRadius
+      ctx.scale(100 / size, 100 / size)
+      drawGoheecaLogo(ctx)
+
+      return 0.03
+    }
+
+    function arcLenToAngle(arc, radius) {
+      return arc / (FULL * radius)
+    }
+
+    function drawGoheecaLogo(ctx) {
+      ctx.save()
+      ctx.arc(0, 0, innerRadius, 0, FULL)
+
+      for (let i = 0; i < 3; i++) {
+        const stripOffset = innerRadius + stripSpace
+        const averageOuterRadius = (outerFartherRadius + outerCloserRadius) / 2
+        const stripLength = averageOuterRadius - stripOffset
+        const widthFactorAtTheEdge = (tipLength + (outerFartherRadius - outerCloserRadius) / 2) / tipLength
+        ctx.rect(-stripWidth/2, stripOffset, stripWidth, stripLength)
+        ctx.moveTo(-stripWidth/2 * tipWidthFactor * widthFactorAtTheEdge, averageOuterRadius)
+        ctx.lineTo(stripWidth/2 * tipWidthFactor * widthFactorAtTheEdge, averageOuterRadius)
+        ctx.lineTo(0, outerFartherRadius + tipLength)
+
+        const angleOffset = FULL/4
+        const closerBeginAngle = angleOffset - arcLenToAngle(space, closerRadius)
+        const closerEndAngle = angleOffset - FULL/3 + arcLenToAngle(space, closerRadius)
+        const fartherBeginAngle = angleOffset - arcLenToAngle(space, fartherRadius)
+        const fartherEndAngle = angleOffset - FULL/3 + arcLenToAngle(space, fartherRadius)
+
+        ctx.moveTo(closerRadius*Math.cos(closerBeginAngle), closerRadius*Math.sin(closerBeginAngle))
+        ctx.arc(0, 0, closerRadius, closerBeginAngle, closerEndAngle, true)
+        ctx.arc(0, 0, fartherRadius, fartherEndAngle, fartherBeginAngle, false)
+
+        const outerCloserBeginAngle = angleOffset + FULL/6 - arcLenToAngle(outerSpace, outerCloserRadius)
+        const outerCloserEndAngle = angleOffset - FULL/6 + arcLenToAngle(outerSpace, outerCloserRadius)
+        const outerFartherBeginAngle = angleOffset + FULL/6 - arcLenToAngle(outerSpace, outerFartherRadius)
+        const outerFartherEndAngle = angleOffset - FULL/6 + arcLenToAngle(outerSpace, outerFartherRadius)
+
+        ctx.moveTo(outerCloserRadius*Math.cos(outerCloserBeginAngle), outerCloserRadius*Math.sin(outerCloserBeginAngle))
+        ctx.arc(0, 0, outerCloserRadius, outerCloserBeginAngle, outerCloserEndAngle, true)
+        ctx.arc(0, 0, outerFartherRadius, outerFartherEndAngle, outerFartherBeginAngle, false)
+
+        ctx.rotate(FULL/3)
+      }
+      ctx.fill()
+      ctx.restore()
     }
 
     window.onresize = function(event) {
