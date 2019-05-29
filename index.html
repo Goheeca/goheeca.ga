@@ -3,6 +3,64 @@
     <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
   </head>
   <body>
+    <canvas id="logo">Logo</canvas>
     <h1>Goheeca's website</h1>
   </body>
+  <style>
+    * { margin: 0; padding: 0; }
+    body, html { width: 100%; height: 100%; background-color: #202020; }
+    #logo { position: absolute; width: 100%; height: 100%; }
+    h1 { text-align: center; color: #40C040; }
+  </style>
+  <script>
+    'use strict'
+
+    let w = 0
+    let h = 0
+    let f = 1
+    let t = 0
+
+    function draw(repeat) {
+      const canvas = document.getElementById("logo")
+      const ctx = canvas.getContext("2d")
+      const boundingRect = canvas.getBoundingClientRect()
+      w = boundingRect.width
+      h = boundingRect.height
+
+
+      canvas.width = w
+      canvas.height = h
+
+      const delay = drawFrame(ctx, w, h, f, t)
+      if (!repeat) {
+        f++
+        t += delay
+        setTimeout(function () { draw(false) }, delay * 1000)
+      }
+    }
+
+    function drawFrame(ctx, w, h, f, t) {
+      const FULL = 2 * Math.PI
+      const omega = 0.5 * FULL
+      const color_omega = 1 * FULL
+      const r = 100
+      const x = r * Math.cos(omega * t)
+      const y = r * Math.sin(omega * t)
+      ctx.beginPath()
+      ctx.arc(x + w/2, y + h/2, 100, 0, FULL, false)
+      const intensity = (Math.sin(color_omega * t) + 1) / 2
+      ctx.fillStyle = 'rgb(0,'+~~(255*intensity)+',0)'
+      ctx.fill()
+
+      return 0.03
+    }
+
+    window.onresize = function(event) {
+      draw(true)
+    }
+    window.onload = function(event) {
+      draw(false)
+    }
+
+  </script>
 </html>
