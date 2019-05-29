@@ -60,11 +60,11 @@
     let stripWidth = 30
     let stripSpace = 20
 
-    let space = 200
+    let space = 20 + stripWidth / 2
     let closerRadius = 170
     let fartherRadius = 200
 
-    let outerSpace = innerRadius * FULL / 2
+    let outerSpace = innerRadius / 2
     let outerCloserRadius = 260
     let outerFartherRadius = 300
 
@@ -87,8 +87,8 @@
       return 0.03
     }
 
-    function arcLenToAngle(arc, radius) {
-      return arc / (FULL * radius)
+    function distToAngle(dist, radius) {
+      return Math.asin(dist / radius)
     }
 
     function drawGoheecaLogo(ctx) {
@@ -106,19 +106,19 @@
         ctx.lineTo(0, outerFartherRadius + tipLength)
 
         const angleOffset = FULL/4
-        const closerBeginAngle = angleOffset - arcLenToAngle(space, closerRadius)
-        const closerEndAngle = angleOffset - FULL/3 + arcLenToAngle(space, closerRadius)
-        const fartherBeginAngle = angleOffset - arcLenToAngle(space, fartherRadius)
-        const fartherEndAngle = angleOffset - FULL/3 + arcLenToAngle(space, fartherRadius)
+        const closerBeginAngle = angleOffset - distToAngle(space, closerRadius)
+        const closerEndAngle = angleOffset - FULL/3 + distToAngle(space, closerRadius)
+        const fartherBeginAngle = angleOffset - distToAngle(space, fartherRadius)
+        const fartherEndAngle = angleOffset - FULL/3 + distToAngle(space, fartherRadius)
 
         ctx.moveTo(closerRadius*Math.cos(closerBeginAngle), closerRadius*Math.sin(closerBeginAngle))
         ctx.arc(0, 0, closerRadius, closerBeginAngle, closerEndAngle, true)
         ctx.arc(0, 0, fartherRadius, fartherEndAngle, fartherBeginAngle, false)
 
-        const outerCloserBeginAngle = angleOffset + FULL/6 - arcLenToAngle(outerSpace, outerCloserRadius)
-        const outerCloserEndAngle = angleOffset - FULL/6 + arcLenToAngle(outerSpace, outerCloserRadius)
-        const outerFartherBeginAngle = angleOffset + FULL/6 - arcLenToAngle(outerSpace, outerFartherRadius)
-        const outerFartherEndAngle = angleOffset - FULL/6 + arcLenToAngle(outerSpace, outerFartherRadius)
+        const outerCloserBeginAngle = angleOffset + FULL/6 - distToAngle(outerSpace, outerCloserRadius)
+        const outerCloserEndAngle = angleOffset - FULL/6 + distToAngle(outerSpace, outerCloserRadius)
+        const outerFartherBeginAngle = angleOffset + FULL/6 - distToAngle(outerSpace, outerFartherRadius)
+        const outerFartherEndAngle = angleOffset - FULL/6 + distToAngle(outerSpace, outerFartherRadius)
 
         ctx.moveTo(outerCloserRadius*Math.cos(outerCloserBeginAngle), outerCloserRadius*Math.sin(outerCloserBeginAngle))
         ctx.arc(0, 0, outerCloserRadius, outerCloserBeginAngle, outerCloserEndAngle, true)
