@@ -82,6 +82,7 @@
       ctx.rotate(omega * t)
       const size = tipLength + outerFartherRadius
       ctx.scale(100 / size, 100 / size)
+      ctx.filter = 'drop-shadow(0 0 10px rgb(100,100,100))
       drawGoheecaLogo(ctx)
 
       return 0.03
