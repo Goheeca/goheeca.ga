@@ -1,6 +1,7 @@
 <html>
   <head>
     <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+    <script type="text/javascript" src="bpgdec8a.js"></script>
   </head>
   <body>
     <canvas id="logo">Logo</canvas>
@@ -11,31 +12,32 @@
     body, html { width: 100%; height: 100%; background-color: #202020; }
     #logo { position: absolute; width: 100%; height: 100%; }
     h1 { text-align: center; color: #40C040; }
+    /*#legs { filter: hue-rotate(120deg) saturate(7) contrast(.4);}*/
   </style>
   <script>
     'use strict'
     const FULL = 2 * Math.PI
 
-    let w = 0
-    let h = 0
-    let f = 1
-    let t = 0
+    let width = 0
+    let height = 0
+    let frame = 1
+    let time = 0
 
     function draw(repeat) {
       const canvas = document.getElementById("logo")
       const ctx = canvas.getContext("2d")
       const boundingRect = canvas.getBoundingClientRect()
-      w = boundingRect.width
-      h = boundingRect.height
+      width = boundingRect.width
+      height = boundingRect.height
 
 
-      canvas.width = w
-      canvas.height = h
+      canvas.width = width
+      canvas.height = height
 
-      const delay = drawFrame(ctx, w, h, f, t)
+      const delay = drawFrame(ctx, width, height, frame, time)
       if (!repeat) {
-        f++
-        t += delay
+        frame++
+        time += delay
         setTimeout(function () { draw(false) }, delay * 1000)
       }
     }
@@ -71,12 +73,16 @@
     let tipLength = 2 * (outerFartherRadius - outerCloserRadius)
     let tipWidthFactor = 2
 
-    function drawFrame(ctx, w, h, f, t) {
-      ctx.translate(w/2, h/2)
+    let decoded = null
+    let loaded = false
 
+    function drawFrame(ctx, w, h, f, t) {
       const color_omega = 0.5 * FULL
       const intensity = (Math.sin(color_omega * t) + 1) / 2
       ctx.fillStyle = 'rgb(0,'+~~(255*intensity)+',0)'
+
+      ctx.save()
+      ctx.translate(w/2, h/2)
 
       const omega = 0.01 * FULL
       ctx.rotate(omega * t)
@@ -84,6 +90,20 @@
       ctx.scale(100 / size, 100 / size)
       ctx.filter = 'drop-shadow(0 0 10px rgb(100,100,100))'
       drawGoheecaLogo(ctx)
+      ctx.restore()
+
+      ctx.save()
+      ctx.translate(w, h)
+      const s = 1
+      ctx.scale(s, s)
+      if (loaded) {
+        const iw = decoded.imageData.width
+        const ih = decoded.imageData.height
+        ctx.translate(-iw, -ih)
+      }
+      ctx.filter = 'drop-shadow(0 0 10px rgb(100,100,100))'
+      drawLatexLegs(ctx, f, t)
+      ctx.restore()
 
       return 0.03
     }
@@ -129,6 +149,42 @@
       }
       ctx.fill()
       ctx.restore()
+    }
+
+    let memoryCanvas = null
+    function drawLatexLegs(ctx, frame, time) {
+      if (!decoded) {
+        memoryCanvas = document.createElement("canvas")
+        decoded = new BPGDecoder(ctx)
+        decoded.onload = function () {
+          loaded = true
+        }
+        decoded.load('latex_legs.bpg')
+      }
+      if (loaded) {
+        const frame_index = frame % decoded.frames.length
+
+        memoryCanvas.width = decoded.imageData.width
+        memoryCanvas.height = decoded.imageData.height
+        const mCtx = memoryCanvas.getContext('2d')
+
+        mCtx.putImageData(decoded.frames[frame_index].img, 0, 0)
+        mCtx.globalCompositeOperation = 'source-in'
+        mCtx.fillStyle = ctx.fillStyle
+        mCtx.fillRect(0, 0, memoryCanvas.width, memoryCanvas.height)
+
+        const mask = document.createElement("canvas")
+        mask.width = memoryCanvas.width
+        mask.height = memoryCanvas.height
+        const maskCtx = mask.getContext('2d')
+        maskCtx.putImageData(mCtx.getImageData(0, 0, memoryCanvas.width, memoryCanvas.height), 0, 0)
+
+        mCtx.putImageData(decoded.frames[frame_index].img, 0, 0)
+        mCtx.globalCompositeOperation = 'color'
+        mCtx.drawImage(mask, 0, 0)
+
+        ctx.drawImage(memoryCanvas, 0, 0)
+      }
     }
 
     window.onresize = function(event) {
