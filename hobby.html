@@ -1,38 +1,18 @@
 <html>
   <head>
     <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.8.2/css/all.css" rel="stylesheet">
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="bpgdec8a.js"></script>
   </head>
   <body>
     <canvas id="logo">Logo</canvas>
-    <div id="cover"><!-- --></div>
-    <div id="content">
-      <h1>Goheeca's website</h1>
-      <ul>
-        <li><a href="mailto:goheeca@gmail.com"><i class="fas fa-at"></i>goheeca@gmail.com</a></li>
-        <li><a href="https://github.com/Goheeca"><i class="fab fa-github"></i>github.com/Goheeca</a></li>
-        <li><a href="https://bitbucket.org/Goheeca"><i class="fab fa-bitbucket"></i>bitbucket.org/Goheeca</a></li>
-        <li><a href="https://gitlab.com/Goheeca"><i class="fab fa-gitlab"></i>gitlab.com/Goheeca</a></li>
-      </ul>
-    </div>
+    <h1>Goheeca's website</h1>
   </body>
   <style>
-    * { margin: 0; padding: 0; color: #40C040; }
+    * { margin: 0; padding: 0; }
     body, html { width: 100%; height: 100%; background-color: #202020; }
-    #logo { position: fixed; width: 100%; height: 100%; z-index: 0; }
-    #cover { position: fixed; width: 100%; height: 100%; background-color: #202020E0; z-index: 1; }
-    #content { position: absolute; width: 100%; height: 100%; z-index: 2; padding: 0 1em; }
-    h1 { text-align: center; }
-    a i { margin-right: 0.5em; }
-    a:link, a:link i { color: #C0FF40; }
-    a:link { text-decoration: underline; }
-    a:hover, a:active, a:hover i, a:active i { color: #FFFF30; }
-    a:hover, a:active { text-decoration: overline; }
-    a:visited, a:visited i { color: #20A020; }
-    ul { margin-left: 2em; }
-
+    #logo { position: absolute; width: 100%; height: 100%; }
+    h1 { text-align: center; color: #40C040; }
+    /*#legs { filter: hue-rotate(120deg) saturate(7) contrast(.4);}*/
   </style>
   <script>
     'use strict'
@@ -62,6 +42,21 @@
       }
     }
 
+    function drawFrameDemo(ctx, w, h, f, t) {
+      const omega = 0.5 * FULL
+      const color_omega = 1 * FULL
+      const r = 100
+      const x = r * Math.cos(omega * t)
+      const y = r * Math.sin(omega * t)
+      ctx.beginPath()
+      ctx.arc(x + w/2, y + h/2, 100, 0, FULL, false)
+      const intensity = (Math.sin(color_omega * t) + 1) / 2
+      ctx.fillStyle = 'rgb(0,'+~~(255*intensity)+',0)'
+      ctx.fill()
+
+      return 0.03
+    }
+
     let innerRadius = 100
 
     let stripWidth = 30
@@ -84,7 +79,6 @@
     function drawFrame(ctx, w, h, f, t) {
       const color_omega = 0.5 * FULL
       const intensity = (Math.sin(color_omega * t) + 1) / 2
-
       ctx.fillStyle = 'rgb(0,'+~~(255*intensity)+',0)'
 
       ctx.save()
@@ -96,6 +90,19 @@
       ctx.scale(100 / size, 100 / size)
       ctx.filter = 'drop-shadow(0 0 10px rgb(100,100,100))'
       drawGoheecaLogo(ctx)
+      ctx.restore()
+
+      ctx.save()
+      ctx.translate(w, h)
+      const s = 1
+      ctx.scale(s, s)
+      if (loaded) {
+        const iw = decoded.imageData.width
+        const ih = decoded.imageData.height
+        ctx.translate(-iw, -ih)
+      }
+      ctx.filter = 'drop-shadow(0 0 10px rgb(100,100,100))'
+      drawLatexLegs(ctx, f, t)
       ctx.restore()
 
       return 0.03
@@ -142,6 +149,42 @@
       }
       ctx.fill()
       ctx.restore()
+    }
+
+    let memoryCanvas = null
+    function drawLatexLegs(ctx, frame, time) {
+      if (!decoded) {
+        memoryCanvas = document.createElement("canvas")
+        decoded = new BPGDecoder(ctx)
+        decoded.onload = function () {
+          loaded = true
+        }
+        decoded.load('latex_legs.bpg')
+      }
+      if (loaded) {
+        const frame_index = frame % decoded.frames.length
+
+        memoryCanvas.width = decoded.imageData.width
+        memoryCanvas.height = decoded.imageData.height
+        const mCtx = memoryCanvas.getContext('2d')
+
+        mCtx.putImageData(decoded.frames[frame_index].img, 0, 0)
+        mCtx.globalCompositeOperation = 'source-in'
+        mCtx.fillStyle = ctx.fillStyle
+        mCtx.fillRect(0, 0, memoryCanvas.width, memoryCanvas.height)
+
+        const mask = document.createElement("canvas")
+        mask.width = memoryCanvas.width
+        mask.height = memoryCanvas.height
+        const maskCtx = mask.getContext('2d')
+        maskCtx.putImageData(mCtx.getImageData(0, 0, memoryCanvas.width, memoryCanvas.height), 0, 0)
+
+        mCtx.putImageData(decoded.frames[frame_index].img, 0, 0)
+        mCtx.globalCompositeOperation = 'color'
+        mCtx.drawImage(mask, 0, 0)
+
+        ctx.drawImage(memoryCanvas, 0, 0)
+      }
     }
 
     window.onresize = function(event) {
